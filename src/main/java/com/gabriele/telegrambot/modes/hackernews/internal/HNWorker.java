@@ -11,7 +11,6 @@ import com.google.gson.Gson;
 import com.google.gson.reflect.TypeToken;
 import com.lambdaworks.redis.RedisClient;
 import com.lambdaworks.redis.api.sync.RedisCommands;
-import com.pengrad.telegrambot.model.request.ParseMode;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -24,7 +23,7 @@ import static akka.dispatch.Futures.future;
 
 public class HNWorker extends UntypedActor {
     final Materializer mat = ActorMaterializer.create(getContext().system());
-    final RedisClient redisClient = RedisClient.create("redis://localhost:6379");
+    final RedisClient redisClient = RedisClient.create("redis://"+ System.getenv("REDIS") + ":6379");
     final RedisCommands<String, String> mDb = redisClient.connect().sync();
 
     final String baseUrl = "https://hacker-news.firebaseio.com/v0/";
