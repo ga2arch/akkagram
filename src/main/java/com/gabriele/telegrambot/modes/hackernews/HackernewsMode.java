@@ -2,6 +2,7 @@ package com.gabriele.telegrambot.modes.hackernews;
 
 import akka.actor.ActorRef;
 import akka.actor.Props;
+import akka.actor.SystemGuardian;
 import com.gabriele.telegrambot.modes.hackernews.commands.ThresholdCommand;
 import com.gabriele.telegrambot.modes.hackernews.internal.HNWorker;
 import com.gabriele.telegrambot.modes.hackernews.messages.CheckHNMessage;
@@ -19,7 +20,7 @@ public class HackernewsMode extends Mode {
 
     HashMap<String, ActorRef> commands = new HashMap<>();
 
-    RedisClient redisClient = RedisClient.create("redis://localhost:6379");
+    RedisClient redisClient = RedisClient.create("redis://"+ System.getenv("REDIS") + ":6379");
     RedisCommands<String, String> mDb = redisClient.connect().sync();
 
     ActorRef mHNWorker = getContext().actorOf(

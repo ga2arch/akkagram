@@ -1,0 +1,18 @@
+sudo: required
+
+services:
+  - docker
+
+language: java
+os:
+  - linux
+
+script:
+  - gradle shadowJar
+  - docker login -e="$DOCKER_EMAIL" -u="$DOCKER_USERNAME" -p="$DOCKER_PASSWORD"
+  - docker pull ga2arch/nimgram-base:latest
+  - docker build -t ga2arch/akkagram .
+  - docker push ga2arch/akkagram
+
+notifications:
+  email: false

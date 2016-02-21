@@ -91,6 +91,6 @@ public class BotActor extends UntypedActor {
             }
         };
 
-        server.bindRoute("localhost", 8080, getContext().system());
+        server.bindRoute("localhost", 8000, getContext().system());
     }
 }
