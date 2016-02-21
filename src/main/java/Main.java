@@ -4,13 +4,10 @@ import java.io.IOException;
 
 public class Main  {
 
-    public static void main(String[] args) throws IOException {
-
+    public static void main(String[] args) throws IOException, InterruptedException {
         Bot.getInstance().start();
-        System.out.println("Type RETURN to exit");
-        System.in.read();
+        System.out.println("Starting up ...");
+        Thread.currentThread().join();
         Bot.getInstance().stop();
     }
-
-
 }
