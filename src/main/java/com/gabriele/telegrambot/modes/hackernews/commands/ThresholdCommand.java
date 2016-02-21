@@ -1,6 +1,7 @@
 package com.gabriele.telegrambot.modes.hackernews.commands;
 
 import akka.actor.ActorRef;
+import com.gabriele.telegrambot.Bot;
 import com.gabriele.telegrambot.commands.Command;
 import com.gabriele.telegrambot.modes.hackernews.messages.SetThresholdMessage;
 import com.pengrad.telegrambot.model.Message;
@@ -23,5 +24,6 @@ public class ThresholdCommand extends Command {
     protected void run(Message message, Matcher matcher) {
         getSender().tell(new SetThresholdMessage(message.chat().id(),
                 Integer.valueOf(matcher.group(1))), getSelf());
+        Bot.getInstance().sendMessage(message.chat().id(), "Threshold set to " + matcher.group(1));
     }
 }

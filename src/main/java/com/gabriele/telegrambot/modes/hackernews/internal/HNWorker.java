@@ -94,10 +94,14 @@ public class HNWorker extends UntypedActor {
                         long storyId = ids.get(i);
 
                         for (String userid: getUsers()) {
-                            future((Callable<Void>) () -> {
-                                sendStory(userid, String.valueOf(storyId));
-                                return null;
-                            }, getContext().dispatcher());
+                            int threshold = Integer.parseInt(mDb.hget(userid, "hn:threshold"));
+
+                            if (i < threshold) {
+                                future((Callable<Void>) () -> {
+                                    sendStory(userid, String.valueOf(storyId));
+                                    return null;
+                                }, getContext().dispatcher());
+                            }
                         }
                     }
                     return null;
