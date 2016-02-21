@@ -3,8 +3,8 @@ package com.gabriele.telegrambot.context;
 import akka.actor.ActorRef;
 import akka.actor.Props;
 import com.gabriele.telegrambot.commands.PingCommand;
-import com.gabriele.telegrambot.modes.HackernewsMode;
-import com.gabriele.telegrambot.modes.YoutubeMode;
+import com.gabriele.telegrambot.modes.hackernews.HackernewsMode;
+import com.gabriele.telegrambot.modes.youtube.YoutubeMode;
 import com.pengrad.telegrambot.model.Message;
 
 import java.util.HashMap;
@@ -24,7 +24,10 @@ public class MainContext extends Context {
         modes.put("youtube", getContext().
                 actorOf(Props.create(YoutubeMode.class)
                         .withDispatcher("commands-dispatcher"), "youtube"));
-        modes.put("hackernews", getContext().actorOf(Props.create(HackernewsMode.class)));
+
+        modes.put("hackernews", getContext()
+                .actorOf(Props.create(HackernewsMode.class)
+                        .withDispatcher("commands-dispatcher")));
     }
 
     @Override

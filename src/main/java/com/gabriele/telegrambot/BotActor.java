@@ -11,7 +11,6 @@ import akka.http.javadsl.server.RouteResult;
 import akka.stream.ActorMaterializer;
 import akka.stream.Materializer;
 import com.gabriele.telegrambot.context.MainContext;
-import com.gabriele.telegrambot.messages.InitBotMessage;
 import com.pengrad.telegrambot.BotUtils;
 import com.pengrad.telegrambot.model.Message;
 import com.pengrad.telegrambot.model.Update;
@@ -37,12 +36,10 @@ public class BotActor extends UntypedActor {
                 currentContext.tell(in, getSelf());
             }
         }
-
-        else if (in instanceof InitBotMessage) {
+        else if (in instanceof Bot.InitBotMessage) {
             loadContexts();
             startServer();
         }
-
         else
             unhandled(in);
     }
@@ -63,7 +60,7 @@ public class BotActor extends UntypedActor {
         if (m.matches()) {
             String name = m.group(1);
             if (contexts.containsKey(name)) {
-                System.out.println("changing context: " + name);
+                System.out.println("Changing context: " + name);
 
                 currentContext = contexts.get(name);
                 currentContext.tell(message, getSelf());

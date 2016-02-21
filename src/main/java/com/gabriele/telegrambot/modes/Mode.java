@@ -34,7 +34,7 @@ public abstract class Mode extends UntypedActor {
 
             String cmd = Command.findCommand(message);
 
-            if (cmd != null && getCommands().containsKey(cmd)) {
+            if (cmd != null && isActive(message) && getCommands().containsKey(cmd)) {
                 getCommands().get(cmd).tell(in, getSelf());
 
             } else {

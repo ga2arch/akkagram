@@ -3,7 +3,6 @@ package com.gabriele.telegrambot;
 import akka.actor.ActorRef;
 import akka.actor.ActorSystem;
 import akka.actor.Props;
-import com.gabriele.telegrambot.messages.InitBotMessage;
 import com.pengrad.telegrambot.TelegramBot;
 import com.pengrad.telegrambot.TelegramBotAdapter;
 import com.pengrad.telegrambot.impl.BotApi;
@@ -39,4 +38,5 @@ public class Bot extends TelegramBot {
         system.terminate();
     }
 
+    public static class InitBotMessage {}
 }
