@@ -5,6 +5,7 @@ import com.gabriele.telegrambot.Bot;
 import com.gabriele.telegrambot.modes.youtube.messages.DownloadMessage;
 import com.pengrad.telegrambot.model.Chat;
 import com.pengrad.telegrambot.model.request.InputFile;
+import okio.Okio;
 
 import java.io.BufferedReader;
 import java.io.File;
@@ -17,13 +18,13 @@ public class DownloadWorker extends UntypedActor {
     @Override
     public void onReceive(Object in) throws Exception {
         if (in instanceof DownloadMessage) {
-            startDownload(((DownloadMessage) in).getChat(),
+            startDownload(((DownloadMessage) in).getChatId(),
                     ((DownloadMessage) in).getLink());
         } else
             unhandled(in);
     }
 
-    private void startDownload(Chat chat, String link) {
+    private void startDownload(String chatId, String link) {
         try {
             Process process = new ProcessBuilder(
                     "youtube-dl",
@@ -31,18 +32,16 @@ public class DownloadWorker extends UntypedActor {
                     link
             ).start();
 
-            BufferedReader reader =
-                    new BufferedReader(new InputStreamReader(process.getInputStream()));
-            StringBuilder builder = new StringBuilder();
-            String line;
-            while ( (line = reader.readLine()) != null) {
-                builder.append(line);
-                builder.append(System.getProperty("line.separator"));
-            }
-            String filename = builder.toString();
-            filename = filename.substring(0, filename.lastIndexOf(".")) + ".mp3";
+            String stdin = Okio.buffer(Okio.source(process.getInputStream())).readUtf8();
+            String stderr = Okio.buffer(Okio.source(process.getErrorStream())).readUtf8();
 
-            Bot.getInstance().sendMessage(chat.id(), "Downloading:\n" + filename);
+            if (!stderr.isEmpty()) {
+                Bot.getInstance().sendMessage(chatId, stderr);
+                return;
+            }
+
+            String filename = stdin.substring(0, stdin.lastIndexOf(".")) + ".mp3";
+            Bot.getInstance().sendMessage(chatId, "Downloading:\n" + filename);
 
             ProcessBuilder dlBuilder = new ProcessBuilder(
                     "youtube-dl",
@@ -55,7 +54,7 @@ public class DownloadWorker extends UntypedActor {
             dlBuilder.start().waitFor();
 
             File file = Paths.get("static", filename).toFile();
-            Bot.getInstance().sendAudio(chat.id(),
+            Bot.getInstance().sendAudio(chatId,
                     InputFile.audio(file),
                     null, null, null, null, null);
 

@@ -3,19 +3,26 @@ package com.gabriele.telegrambot.modes.youtube.messages;
 import com.pengrad.telegrambot.model.Chat;
 
 public class DownloadMessage {
-    Chat chat;
+    String chatId;
     String link;
+    String jobId;
 
-    public DownloadMessage(Chat chat, String link) {
-        this.chat = chat;
+    public DownloadMessage(String chatId, String link, String jobId) {
+        this.chatId = chatId;
         this.link = link;
+        this.jobId = jobId;
     }
 
-    public Chat getChat() {
-        return chat;
+    public String getChatId() {
+        return chatId;
     }
 
     public String getLink() {
         return link;
     }
+
+    public String getJobId() {
+        return jobId;
+    }
 }
+
