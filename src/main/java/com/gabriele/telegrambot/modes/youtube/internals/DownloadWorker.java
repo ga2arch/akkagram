@@ -4,16 +4,14 @@ import akka.actor.UntypedActor;
 import com.gabriele.telegrambot.Bot;
 import com.gabriele.telegrambot.modes.youtube.messages.DownloadCompleted;
 import com.gabriele.telegrambot.modes.youtube.messages.DownloadMessage;
-import com.pengrad.telegrambot.model.Chat;
 import com.pengrad.telegrambot.model.request.InputFile;
 import com.pengrad.telegrambot.response.SendResponse;
 import okio.Okio;
 import org.apache.commons.io.FileUtils;
 
-import java.io.BufferedReader;
-import java.io.File;
 import java.io.IOException;
-import java.io.InputStreamReader;
+import java.nio.file.Files;
+import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.UUID;
 
@@ -32,6 +30,8 @@ public class DownloadWorker extends UntypedActor {
 
     private void startDownload(String chatId, String url, String jobId) {
         try {
+            
+            // TODO retrieve Song name and performer
             Process process = new ProcessBuilder(
                     "youtube-dl",
                     "--get-filename",
@@ -56,16 +56,14 @@ public class DownloadWorker extends UntypedActor {
                         "mp3",
                         url);
 
-                File dlFolder = new File("static/" + UUID.randomUUID().toString());
+                Path dlFolder = Files.createDirectories(Paths.get("static", UUID.randomUUID().toString()));
                 try {
-                    dlFolder.mkdirs();
-
-                    dlBuilder.directory(dlFolder);
+                    dlBuilder.directory(dlFolder.toFile());
                     dlBuilder.start().waitFor();
 
-                    File file = Paths.get(dlFolder.getAbsolutePath(), filename).toFile();
+                    Path file = dlFolder.resolve(filename);
                     SendResponse resp = Bot.getInstance().sendAudio(chatId,
-                            InputFile.audio(file),
+                            InputFile.audio(file.toFile()),
                             null, null, null, null, null);
 
                     if (resp.isOk()) {
@@ -75,13 +73,11 @@ public class DownloadWorker extends UntypedActor {
                         getSender().tell(new DownloadError(jobId, url, "File to big"), getSelf());
                     }
                 } finally {
-                    FileUtils.deleteDirectory(dlFolder);
+                    FileUtils.deleteDirectory(dlFolder.toFile());
                 }
             }
 
-        } catch (IOException e) {
-            e.printStackTrace();
-        } catch (InterruptedException e) {
+        } catch (IOException | InterruptedException e) {
             e.printStackTrace();
         }
     }
