@@ -16,6 +16,7 @@ dependencies {
     compile 'com.google.code.gson:gson:2.6.1'
     compile 'biz.paluch.redis:lettuce:4.1.Final'
     compile 'com.squareup.okio:okio:1.6.0'
+    compile 'commons-io:commons-io:2.4'
 }
 
 shadowJar {

@@ -6,19 +6,23 @@ import com.gabriele.telegrambot.modes.youtube.messages.DownloadCompleted;
 import com.gabriele.telegrambot.modes.youtube.messages.DownloadMessage;
 import com.pengrad.telegrambot.model.Chat;
 import com.pengrad.telegrambot.model.request.InputFile;
+import com.pengrad.telegrambot.response.SendResponse;
 import okio.Okio;
+import org.apache.commons.io.FileUtils;
 
 import java.io.BufferedReader;
 import java.io.File;
 import java.io.IOException;
 import java.io.InputStreamReader;
 import java.nio.file.Paths;
+import java.util.UUID;
 
 public class DownloadWorker extends UntypedActor {
 
     @Override
     public void onReceive(Object in) throws Exception {
         if (in instanceof DownloadMessage) {
+
             startDownload(((DownloadMessage) in).getChatId(),
                     ((DownloadMessage) in).getLink(),
                     ((DownloadMessage) in).getJobId());
@@ -26,12 +30,12 @@ public class DownloadWorker extends UntypedActor {
             unhandled(in);
     }
 
-    private void startDownload(String chatId, String link, String jobId) {
+    private void startDownload(String chatId, String url, String jobId) {
         try {
             Process process = new ProcessBuilder(
                     "youtube-dl",
                     "--get-filename",
-                    link
+                    url
             ).start();
 
             String stdin = Okio.buffer(Okio.source(process.getInputStream())).readUtf8();
@@ -39,7 +43,8 @@ public class DownloadWorker extends UntypedActor {
 
             if (!stderr.isEmpty()) {
                 Bot.getInstance().sendMessage(chatId, stderr);
-                
+                getSender().tell(new DownloadError(jobId, url, stderr), getSelf());
+
             } else {
                 String filename = stdin.substring(0, stdin.lastIndexOf(".")) + ".mp3";
                 Bot.getInstance().sendMessage(chatId, "Downloading:\n" + filename);
@@ -49,27 +54,36 @@ public class DownloadWorker extends UntypedActor {
                         "-x",
                         "--audio-format",
                         "mp3",
-                        link);
+                        url);
 
-                dlBuilder.directory(new File("static"));
-                dlBuilder.start().waitFor();
+                File dlFolder = new File("static/" + UUID.randomUUID().toString());
+                try {
+                    dlFolder.mkdirs();
 
-                File file = Paths.get("static", filename).toFile();
-                Bot.getInstance().sendAudio(chatId,
-                        InputFile.audio(file),
-                        null, null, null, null, null);
+                    dlBuilder.directory(dlFolder);
+                    dlBuilder.start().waitFor();
 
-                file.delete();
+                    File file = Paths.get(dlFolder.getAbsolutePath(), filename).toFile();
+                    SendResponse resp = Bot.getInstance().sendAudio(chatId,
+                            InputFile.audio(file),
+                            null, null, null, null, null);
+
+                    if (resp.isOk()) {
+                        String fileId = resp.message().audio().fileId();
+                        getSender().tell(new DownloadCompleted(jobId, fileId, url), getSelf());
+                    } else {
+                        getSender().tell(new DownloadError(jobId, url, "File to big"), getSelf());
+                    }
+                } finally {
+                    FileUtils.deleteDirectory(dlFolder);
+                }
             }
-
-            getSender().tell(new DownloadCompleted(jobId), getSelf());
 
         } catch (IOException e) {
             e.printStackTrace();
         } catch (InterruptedException e) {
             e.printStackTrace();
         }
-
     }
 }
 

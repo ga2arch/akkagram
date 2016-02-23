@@ -6,6 +6,7 @@ import akka.actor.UntypedActor;
 import akka.routing.*;
 import com.gabriele.telegrambot.Bot;
 import com.gabriele.telegrambot.modes.Mode;
+import com.gabriele.telegrambot.modes.youtube.internals.DownloadError;
 import com.gabriele.telegrambot.modes.youtube.internals.DownloadWorker;
 import com.gabriele.telegrambot.modes.youtube.messages.DownloadCompleted;
 import com.gabriele.telegrambot.modes.youtube.messages.DownloadMessage;
@@ -14,6 +15,9 @@ import com.lambdaworks.redis.api.sync.RedisCommands;
 import com.pengrad.telegrambot.model.Chat;
 import com.pengrad.telegrambot.model.Message;
 import com.pengrad.telegrambot.model.request.InputFile;
+import com.pengrad.telegrambot.model.request.Keyboard;
+import com.pengrad.telegrambot.response.SendResponse;
+import org.apache.commons.io.FileUtils;
 
 import java.io.BufferedReader;
 import java.io.File;
@@ -39,6 +43,10 @@ public class YoutubeMode extends Mode {
     @Override
     public void preStart() throws Exception {
         super.preStart();
+
+        File dlFolder = new File("static");
+        FileUtils.deleteDirectory(dlFolder);
+
         for (String jobId: mDb.smembers("youtube:jobs")) {
             String url = mDb.hget(jobId, "url");
             String chatId = mDb.hget(jobId, "chatId");
@@ -60,11 +68,38 @@ public class YoutubeMode extends Mode {
     protected void run(Message message) {
         Matcher m = youtubeRegex.matcher(message.text());
         if (m.find()) {
-            System.out.println("Received link: " + m.group(1));
+            System.out.println("Received id: " + m.group(1));
             String url = "https://www.youtube.com/watch?v=" + m.group(1);
-            String jobId = saveJob(message.chat().id(), url);
-            downloader.tell(new DownloadMessage(String.valueOf(message.chat().id()), url, jobId), getSelf());
+
+            if (!sendFromCache(message.chat().id(), url)) {
+                String jobId = saveJob(message.chat().id(), url);
+                downloader.tell(new DownloadMessage(String.valueOf(message.chat().id()), url, jobId), getSelf());
+            }
         }
+    }
+
+    private boolean sendFromCache(long chatId, String url) {
+        String fileId = mDb.hget(url, "fileId");
+        String error = mDb.hget(url, "error");
+
+        if (fileId == null && error == null) {
+            return false;
+        }
+
+        System.out.println("Sending from cache");
+
+        if (fileId != null) {
+            try {
+                Bot.getInstance().sendAudio(chatId,
+                        fileId, null, null, " ", null, null);
+            } catch (Exception e) {
+                return false;
+            }
+        } else {
+            Bot.getInstance().sendMessage(chatId, error);
+        }
+
+        return true;
     }
 
     private String saveJob(long chatId, String url) {
@@ -79,8 +114,18 @@ public class YoutubeMode extends Mode {
     @Override
     public void onReceive(Object in) throws Exception {
         if (in instanceof DownloadCompleted) {
-            mDb.del(((DownloadCompleted) in).getJobId());
-            mDb.srem("youtube:jobs", ((DownloadCompleted) in).getJobId());
+            DownloadCompleted m = (DownloadCompleted) in;
+            mDb.del(m.getJobId());
+            mDb.srem("youtube:jobs", m.getJobId());
+
+            mDb.hset(m.getUrl(), "fileId", m.getFileId());
+
+        } else if (in instanceof DownloadError) {
+            DownloadError m = (DownloadError) in;
+            mDb.del(m.getJobId());
+            mDb.srem("youtube:jobs", m.getJobId());
+
+            mDb.hset(m.getUrl(), "error", m.getError());
         } else
             super.onReceive(in);
     }
