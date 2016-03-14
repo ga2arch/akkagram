@@ -8,6 +8,7 @@ import com.pengrad.telegrambot.model.request.InputFile;
 import com.pengrad.telegrambot.response.SendResponse;
 import okio.Okio;
 import org.apache.commons.io.FileUtils;
+import retrofit.RetrofitError;
 
 import java.io.IOException;
 import java.nio.file.Files;
@@ -66,18 +67,20 @@ public class DownloadWorker extends UntypedActor {
                             InputFile.audio(file.toFile()),
                             null, null, null, null, null);
 
-                    if (resp.isOk()) {
-                        String fileId = resp.message().audio().fileId();
-                        getSender().tell(new DownloadCompleted(jobId, fileId, url), getSelf());
-                    } else {
-                        getSender().tell(new DownloadError(jobId, url, "File too big"), getSelf());
-                    }
+                    String fileId = resp.message().audio().fileId();
+                    getSender().tell(new DownloadCompleted(jobId, fileId, url), getSelf());
+
+                } catch (RetrofitError e) {
+                    getSender().tell(new DownloadError(jobId, url, "File too big"), getSelf());
+                    e.printStackTrace();
+
                 } finally {
                     FileUtils.deleteDirectory(dlFolder.toFile());
                 }
             }
 
         } catch (IOException | InterruptedException e) {
+            getSender().tell(new DownloadError(jobId, url, e.getMessage()), getSelf());
             e.printStackTrace();
         }
     }
