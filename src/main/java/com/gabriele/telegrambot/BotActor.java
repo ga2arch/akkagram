@@ -30,8 +30,10 @@ public class BotActor extends UntypedActor {
     @Override
     public void onReceive(Object in) throws Exception {
         if (in instanceof Message) {
-            if (((Message) in).text().startsWith("/enter")) {
-                changeContex(((Message) in));
+            Message msg = (Message) in;
+
+            if (msg.text() != null && msg.text().startsWith("/enter")) {
+                changeContex(msg);
             } else {
                 currentContext.tell(in, getSelf());
             }

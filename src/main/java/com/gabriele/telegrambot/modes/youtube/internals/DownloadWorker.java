@@ -30,7 +30,7 @@ public class DownloadWorker extends UntypedActor {
 
     private void startDownload(String chatId, String url, String jobId) {
         try {
-            
+
             // TODO retrieve Song name and performer
             Process process = new ProcessBuilder(
                     "youtube-dl",
@@ -70,7 +70,7 @@ public class DownloadWorker extends UntypedActor {
                         String fileId = resp.message().audio().fileId();
                         getSender().tell(new DownloadCompleted(jobId, fileId, url), getSelf());
                     } else {
-                        getSender().tell(new DownloadError(jobId, url, "File to big"), getSelf());
+                        getSender().tell(new DownloadError(jobId, url, "File too big"), getSelf());
                     }
                 } finally {
                     FileUtils.deleteDirectory(dlFolder.toFile());
