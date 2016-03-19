@@ -37,8 +37,6 @@ public class DownloadWorker extends UntypedActor {
             log.debug(jobId + ") Fetching title for: " + url);
             Process process = new ProcessBuilder(
                     "youtube-dl",
-                    "-f",
-                    "bestaudio[filesize<50M]",
                     "-o",
                     "%(title)s.%(ext)s",
                     "--get-filename",
@@ -55,7 +53,6 @@ public class DownloadWorker extends UntypedActor {
 
             } else {
                 String title = stdin.substring(0, stdin.lastIndexOf("."));
-                String filename = stdin.substring(0, stdin.length()-1);
                 Bot.getInstance().sendMessage(chatId, "Downloading:\n" + title);
 
                 log.info(jobId + ") Found title: " + title);
@@ -64,7 +61,7 @@ public class DownloadWorker extends UntypedActor {
                 ProcessBuilder dlBuilder = new ProcessBuilder(
                         "youtube-dl",
                         "-o",
-                        filename,
+                        "%(title)s.%(ext)s",
                         "-x",
                         "-f",
                         "bestaudio[filesize<50M]",
@@ -85,7 +82,7 @@ public class DownloadWorker extends UntypedActor {
                         Bot.getInstance().sendMessage(chatId, stderr);
                         getSender().tell(new DownloadError(jobId, url, stderr), getSelf());
                     } else {
-                        Path file = dlFolder.resolve(filename);
+                        Path file = dlFolder.toFile().listFiles()[0].toPath();
                         SendResponse resp = Bot.getInstance().sendAudio(chatId,
                                 InputFile.audio(file.toFile()),
                                 null, null, title, null, null);
