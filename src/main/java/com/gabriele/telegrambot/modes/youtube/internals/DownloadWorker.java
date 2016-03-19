@@ -55,8 +55,8 @@ public class DownloadWorker extends UntypedActor {
 
             } else {
                 String title = stdin.substring(0, stdin.lastIndexOf("."));
-                String filename = stdin;
-                Bot.getInstance().sendMessage(chatId, "Downloading:\n" + filename);
+                String filename = stdin.substring(0, stdin.length()-1);
+                Bot.getInstance().sendMessage(chatId, "Downloading:\n" + title);
 
                 log.info(jobId + ") Found title: " + title);
                 log.info(jobId + ") Starting download");
@@ -64,7 +64,7 @@ public class DownloadWorker extends UntypedActor {
                 ProcessBuilder dlBuilder = new ProcessBuilder(
                         "youtube-dl",
                         "-o",
-                        stdin.substring(0, stdin.length()-1),
+                        filename,
                         "-x",
                         "-f",
                         "bestaudio[filesize<50M]",
