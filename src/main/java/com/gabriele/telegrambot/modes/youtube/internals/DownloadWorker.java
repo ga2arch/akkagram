@@ -37,6 +37,8 @@ public class DownloadWorker extends UntypedActor {
             log.debug(jobId + ") Fetching title for: " + url);
             Process process = new ProcessBuilder(
                     "youtube-dl",
+                    "-f",
+                    "bestaudio[filesize<50M]",
                     "-o",
                     "%(title)s.%(ext)s",
                     "--get-filename",
@@ -53,7 +55,7 @@ public class DownloadWorker extends UntypedActor {
 
             } else {
                 String title = stdin.substring(0, stdin.lastIndexOf("."));
-                String filename = title + ".mp3";
+                String filename = stdin;
                 Bot.getInstance().sendMessage(chatId, "Downloading:\n" + filename);
 
                 log.info(jobId + ") Found title: " + title);
