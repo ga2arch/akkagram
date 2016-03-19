@@ -85,7 +85,7 @@ public class DownloadWorker extends UntypedActor {
                         Path file = dlFolder.toFile().listFiles()[0].toPath();
                         SendResponse resp;
 
-                        if (file.endsWith(".opus")) {
+                        if (file.getFileName().endsWith(".opus")) {
                             Bot.getInstance().sendMessage(chatId, "The only format available is opus, good luck.");
                             resp = Bot.getInstance().sendDocument(chatId,
                                     InputFile.audio(file.toFile()),
