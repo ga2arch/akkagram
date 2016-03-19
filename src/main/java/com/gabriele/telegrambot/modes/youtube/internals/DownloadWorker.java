@@ -64,7 +64,7 @@ public class DownloadWorker extends UntypedActor {
                         "%(title)s.%(ext)s",
                         "-x",
                         "-f",
-                        "bestaudio[filesize<50M]",
+                        "bestaudio[filesize<50M, acodec!=opus]",
                         url);
 
                 log.info(jobId + ") Download finished");
