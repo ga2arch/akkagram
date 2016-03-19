@@ -67,7 +67,7 @@ public class DownloadWorker extends UntypedActor {
                         "--audio-format",
                         "mp3",
                         "-f",
-                        "'best[filesize<50M]'",
+                        "bestaudio[filesize<50M]",
                         url);
 
                 log.info(jobId + ") Download finished");
@@ -75,17 +75,27 @@ public class DownloadWorker extends UntypedActor {
                 Path dlFolder = Files.createDirectories(Paths.get("static", UUID.randomUUID().toString()));
                 try {
                     dlBuilder.directory(dlFolder.toFile());
-                    dlBuilder.start().waitFor();
+                    Process dlProcess = dlBuilder.start();
+                    dlProcess.waitFor();
 
-                    Path file = dlFolder.resolve(filename);
-                    SendResponse resp = Bot.getInstance().sendAudio(chatId,
-                            InputFile.audio(file.toFile()),
-                            null, null, title, null, null);
+                    stderr = Okio.buffer(Okio.source(dlProcess.getErrorStream())).readUtf8();
 
-                    String fileId = resp.message().audio().fileId();
-                    getSender().tell(new DownloadCompleted(jobId, fileId, url), getSelf());
+                    if (!stderr.isEmpty()) {
+                        log.error(jobId + ") " + stderr);
+                        Bot.getInstance().sendMessage(chatId, stderr);
+                        getSender().tell(new DownloadError(jobId, url, stderr), getSelf());
+                    } else {
+                        Path file = dlFolder.resolve(filename);
+                        SendResponse resp = Bot.getInstance().sendAudio(chatId,
+                                InputFile.audio(file.toFile()),
+                                null, null, title, null, null);
+
+                        String fileId = resp.message().audio().fileId();
+                        getSender().tell(new DownloadCompleted(jobId, fileId, url), getSelf());
+                    }
 
                 } catch (RetrofitError e) {
+                    Bot.getInstance().sendMessage(chatId, e.getMessage());
                     getSender().tell(new DownloadError(jobId, url, e.getMessage()), getSelf());
                     e.printStackTrace();
 
@@ -95,6 +105,7 @@ public class DownloadWorker extends UntypedActor {
             }
 
         } catch (IOException | InterruptedException e) {
+            Bot.getInstance().sendMessage(chatId, e.getMessage());
             getSender().tell(new DownloadError(jobId, url, e.getMessage()), getSelf());
             e.printStackTrace();
         }

@@ -13,11 +13,11 @@ public class PingCommand extends Command {
 
     @Override
     protected String getArgsRegex() {
-        return "(.*)";
+        return "";
     }
 
     @Override
     protected void run(Message message, Matcher matcher) {
-        Bot.getInstance().sendMessage(message.chat().id(), matcher.group(1));
+        Bot.getInstance().sendMessage(message.chat().id(), "PONG");
     }
 }

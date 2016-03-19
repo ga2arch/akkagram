@@ -3,6 +3,8 @@ package com.gabriele.telegrambot;
 import akka.actor.ActorRef;
 import akka.actor.Props;
 import akka.actor.UntypedActor;
+import akka.event.Logging;
+import akka.event.LoggingAdapter;
 import akka.http.javadsl.model.StatusCodes;
 import akka.http.javadsl.server.Handler;
 import akka.http.javadsl.server.HttpApp;
@@ -24,6 +26,7 @@ public class BotActor extends UntypedActor {
 
     final Materializer mat = ActorMaterializer.create(getContext().system());
     HashMap<String, ActorRef> contexts = new HashMap<>();
+    LoggingAdapter log = Logging.getLogger(getContext().system(), this);
 
     ActorRef currentContext;
 
@@ -31,8 +34,9 @@ public class BotActor extends UntypedActor {
     public void onReceive(Object in) throws Exception {
         if (in instanceof Message) {
             Message msg = (Message) in;
-
             if (msg.text() != null && msg.text().startsWith("/enter")) {
+                log.info("Received: " + msg.text());
+
                 changeContex(msg);
             } else {
                 currentContext.tell(in, getSelf());
