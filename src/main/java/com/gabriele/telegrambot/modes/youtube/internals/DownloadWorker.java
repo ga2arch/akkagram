@@ -12,6 +12,7 @@ import okio.Okio;
 import org.apache.commons.io.FileUtils;
 import retrofit.RetrofitError;
 
+import java.io.File;
 import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
@@ -82,17 +83,17 @@ public class DownloadWorker extends UntypedActor {
                         Bot.getInstance().sendMessage(chatId, stderr);
                         getSender().tell(new DownloadError(jobId, url, stderr), getSelf());
                     } else {
-                        Path file = dlFolder.toFile().listFiles()[0].toPath();
+                        File file = dlFolder.toFile().listFiles()[0];
                         SendResponse resp;
 
-                        if (file.getFileName().endsWith(".opus")) {
+                        if (file.getName().endsWith(".opus")) {
                             Bot.getInstance().sendMessage(chatId, "The only format available is opus, good luck.");
                             resp = Bot.getInstance().sendDocument(chatId,
-                                    InputFile.audio(file.toFile()),
+                                    InputFile.audio(file),
                                     null, null);
                         } else {
                             resp = Bot.getInstance().sendAudio(chatId,
-                                    InputFile.audio(file.toFile()),
+                                    InputFile.audio(file),
                                     null, null, title, null, null);
                         }
 
