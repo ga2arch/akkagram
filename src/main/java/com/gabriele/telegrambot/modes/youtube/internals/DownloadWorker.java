@@ -64,8 +64,6 @@ public class DownloadWorker extends UntypedActor {
                         "-o",
                         stdin.substring(0, stdin.length()-1),
                         "-x",
-                        "--audio-format",
-                        "mp3",
                         "-f",
                         "bestaudio[filesize<50M]",
                         url);
