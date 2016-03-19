@@ -63,10 +63,10 @@ public class YoutubeMode extends Mode {
             System.out.println("Received id: " + m.group(1));
             String url = "https://www.youtube.com/watch?v=" + m.group(1);
 
-            if (!sendFromCache(message.chat().id(), url)) {
+            //if (!sendFromCache(message.chat().id(), url)) {
                 String jobId = saveJob(message.chat().id(), url);
                 downloader.tell(new DownloadMessage(String.valueOf(message.chat().id()), url, jobId), getSelf());
-            }
+            //}
         }
     }
 
