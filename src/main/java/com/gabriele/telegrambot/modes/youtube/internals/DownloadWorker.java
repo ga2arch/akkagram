@@ -61,6 +61,8 @@ public class DownloadWorker extends UntypedActor {
 
                 ProcessBuilder dlBuilder = new ProcessBuilder(
                         "youtube-dl",
+                        "-o",
+                        "%(title)s.%(ext)s",
                         "-x",
                         "--audio-format",
                         "mp3",
