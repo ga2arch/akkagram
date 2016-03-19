@@ -83,9 +83,18 @@ public class DownloadWorker extends UntypedActor {
                         getSender().tell(new DownloadError(jobId, url, stderr), getSelf());
                     } else {
                         Path file = dlFolder.toFile().listFiles()[0].toPath();
-                        SendResponse resp = Bot.getInstance().sendAudio(chatId,
-                                InputFile.audio(file.toFile()),
-                                null, null, title, null, null);
+                        SendResponse resp;
+
+                        if (file.endsWith(".opus")) {
+                            Bot.getInstance().sendMessage(chatId, "The only format available is opus, good luck.");
+                            resp = Bot.getInstance().sendDocument(chatId,
+                                    InputFile.audio(file.toFile()),
+                                    null, null);
+                        } else {
+                            resp = Bot.getInstance().sendAudio(chatId,
+                                    InputFile.audio(file.toFile()),
+                                    null, null, title, null, null);
+                        }
 
                         String fileId = resp.message().audio().fileId();
                         getSender().tell(new DownloadCompleted(jobId, fileId, url), getSelf());
