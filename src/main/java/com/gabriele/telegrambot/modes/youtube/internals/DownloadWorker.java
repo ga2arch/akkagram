@@ -62,7 +62,7 @@ public class DownloadWorker extends UntypedActor {
                 ProcessBuilder dlBuilder = new ProcessBuilder(
                         "youtube-dl",
                         "-o",
-                        "%(title)s.%(ext)s",
+                        stdin,
                         "-x",
                         "--audio-format",
                         "mp3",
